@@ -14,7 +14,9 @@ class ProductController extends Controller
      */
     public function index()
     {
-        $products = Product::where('status', 1)->orderBy('created_at', 'desc')->get();
+        $products = Product::where('status', 1)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
         return view('products.index', ['products' => $products]);
     }
 
@@ -74,7 +76,7 @@ class ProductController extends Controller
     public function update($id, Request $request)
     {
         $product = Product::findOrFail($id);
-        
+
         $validator = Validator::make($request->all(), [
             'name' => 'required',
             'sku' => 'required|unique:products,sku,' . $product->id,
@@ -120,7 +122,12 @@ class ProductController extends Controller
      */
     public function trash()
     {
-        $products = Product::onlyTrashed()->get();
+        // Auto-archive products that were moved to trash > 30 days ago
+        Product::onlyTrashed()
+            ->where('deleted_at', '<=', now()->subDays(30))
+            ->update(['status' => 2, 'deleted_at' => null]);
+
+        $products = Product::where('status', 0)->onlyTrashed()->get();
         return view('products.trash', ['products' => $products]);
     }
 
@@ -139,15 +146,25 @@ class ProductController extends Controller
     /**
      * Permanently remove from database.
      */
+    /**
+     * Permanently mark as status 2 (Archived/Permanently Deleted)
+     */
     public function forceDelete($id)
     {
         $product = Product::withTrashed()->findOrFail($id);
 
+        // 1. Delete the physical image file
         if ($product->image && File::exists(public_path('uploads/products/' . $product->image))) {
             File::delete(public_path('uploads/products/' . $product->image));
+            $product->image = null; // Clear the image path
         }
 
-        $product->forceDelete();
-        return redirect()->route('products.trash')->with('success', 'Product permanently deleted.');
+        // 2. Instead of removing the row, update status to 2
+        $product->update([
+            'status' => 2,
+            'deleted_at' => null // Clear the soft-delete timestamp so it's no longer "trashed"
+        ]);
+
+        return redirect()->route('products.trash')->with('success', 'Product permanently archived .');
     }
 }
