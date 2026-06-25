@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
@@ -12,7 +13,8 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return view('products.index');
+        $products = Product::orderBy('created_at', 'desc')->get();
+        return view('products.index', ['products' => $products]);
     }
 
     /**
@@ -20,7 +22,7 @@ class ProductController extends Controller
      */
     public function create()
     {
-        //
+        return view('products.create');
     }
 
     /**
@@ -28,7 +30,38 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $validator = Validator::make($request->all(), [
+            'name' => 'required',
+            'sku' => 'required|unique:products,sku',
+            'price' => 'required|numeric',
+            'status' => 'required',
+            'image' => 'image|mimes:jpeg,jpg,png|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('products.create')->withErrors($validator)->withInput();
+        }
+
+        // 1. Create Product instance
+        $product = new Product();
+        $product->name = $request->name;
+        $product->sku = $request->sku;
+        $product->price = $request->price;
+        $product->status = $request->status;
+        $product->save();
+
+        // 2. Handle Image Upload
+        if ($request->hasFile('image')) {
+            $image = $request->image;
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            $image->move(public_path('uploads/products'), $imageName);
+            $product->image = $imageName;
+            $product->save();
+        }
+
+        
+
+        return redirect()->route('products.index')->with('success', 'Product created successfully.');
     }
 
     /**
