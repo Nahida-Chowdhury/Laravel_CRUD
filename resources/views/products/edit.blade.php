@@ -17,7 +17,7 @@
     <div class="container mb-5">
         <div class="row">
             <div class="d-flex justify-content-end p-0 mt-3">
-                <a href="{{ route('products.index')  }}" class="btn btn-dark">Back</a>
+                <a href="{{ route('products.index') }}" class="btn btn-dark">Back</a>
             </div>
             <div class="card p-0 mt-3">
                 <div class="card-header bg-dark text-white">
@@ -71,15 +71,7 @@
                                 <p class="invalid-feedback">{{ $message }}</p>
                             @enderror
                         </div>
-                        <div class="mb-3">
-                            <label for="status" class="form-label">Status</label>
-                            <select name="status" id="status" class="form-select">
-                                <option {{ $product->status == 'Active' ? 'selected' : '' }} value="Active">Active
-                                </option>
-                                <option {{ $product->status == 'Inactive' ? 'selected' : '' }} value="Inactive">
-                                    Inactive</option>
-                            </select>
-                        </div>
+
                         <button class="btn btn-dark">Update</button>
                     </form>
                 </div>

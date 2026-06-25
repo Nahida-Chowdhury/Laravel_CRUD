@@ -16,7 +16,8 @@
 
     <div class="container">
         <div class="row">
-            <div class="d-flex justify-content-end p-0 mt-3">
+            <div class="d-flex justify-content-end p-0 mt-3 gap-4">
+                <a href="{{ route('products.trash') }}" class="btn btn-warning">View Trash</a>
                 <a href="{{ route('products.create') }}" class="btn btn-dark">Create</a>
             </div>
 
@@ -69,16 +70,17 @@
                                         <td>{{ $product->sku }}</td>
                                         <td>${{ $product->price }}</td>
                                         <td>
-                                            @if ($product->status == 'Active')
+                                            @if ($product->status == '1')
                                                 <span class="badge bg-success">Active</span>
                                             @else
                                                 <span class="badge bg-danger">Inactive</span>
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                            <a href="{{ route('products.edit', $product->id) }}" class="btn btn-dark btn-sm">Edit</a>
-                                            <form action="{{ route('products.destroy', $product->id)}}"
-                                                method="POST" class="d-inline-block"
+                                            <a href="{{ route('products.edit', $product->id) }}"
+                                                class="btn btn-dark btn-sm">Edit</a>
+                                            <form action="{{ route('products.destroy', $product->id) }}" method="POST"
+                                                class="d-inline-block"
                                                 onsubmit="return confirm('Are you sure you want to delete this product?')">
                                                 @csrf
                                                 @method('DELETE')

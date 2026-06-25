@@ -28,8 +28,9 @@
                         @csrf
                         <div class="mb-3">
                             <label for="name" class="form-label">Name</label>
-                            <input type="text" value="{{ old('name') }}" class="form-control @error('name') is-invalid @enderror"
-                                id="name" name="name" placeholder="Name">
+                            <input type="text" value="{{ old('name') }}"
+                                class="form-control @error('name') is-invalid @enderror" id="name" name="name"
+                                placeholder="Name">
                             @error('name')
                                 <p class="invalid-feedback">{{ $message }}</p>
                             @enderror
@@ -46,8 +47,9 @@
 
                         <div class="mb-3">
                             <label for="sku" class="form-label">SKU</label>
-                            <input type="text" value="{{ old('sku') }}" class="form-control @error('sku') is-invalid @enderror" id="sku"
-                                name="sku" placeholder="SKU">
+                            <input type="text" value="{{ old('sku') }}"
+                                class="form-control @error('sku') is-invalid @enderror" id="sku" name="sku"
+                                placeholder="SKU">
                             @error('sku')
                                 <p class="invalid-feedback">{{ $message }}</p>
                             @enderror
@@ -55,19 +57,14 @@
 
                         <div class="mb-3">
                             <label for="price" class="form-label">Price</label>
-                            <input type="text" value="{{ old('price') }}" class="form-control @error('price') is-invalid @enderror"
-                                id="price" name="price" placeholder="Price">
+                            <input type="text" value="{{ old('price') }}"
+                                class="form-control @error('price') is-invalid @enderror" id="price" name="price"
+                                placeholder="Price">
                             @error('price')
                                 <p class="invalid-feedback">{{ $message }}</p>
                             @enderror
                         </div>
-                        <div class="mb-3">
-                            <label for="status" class="form-label">Status</label>
-                            <select name="status" id="status" class="form-select">
-                                <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
-                            </select>
-                        </div>
+
                         <button class="btn btn-dark">Submit</button>
                     </form>
                 </div>

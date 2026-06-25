@@ -13,3 +13,6 @@ Route::post('/products', [ProductController::class, 'store'])->name('products.st
 Route::get('/products/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
 Route::put('/products/{product}', [ProductController::class, 'update'])->name('products.update');
 Route::delete('/products/{product}', [ProductController::class, 'destroy'])->name('products.destroy');
+Route::get('/products/trash', [ProductController::class, 'trash'])->name('products.trash');
+Route::post('/products/restore/{id}', [ProductController::class, 'restore'])->name('products.restore');
+Route::delete('/products/permanent-delete/{id}', [ProductController::class, 'forceDelete'])->name('products.forceDelete');

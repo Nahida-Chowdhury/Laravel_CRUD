@@ -10,16 +10,16 @@ use Illuminate\Support\Facades\File;
 class ProductController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Display a listing of active products.
      */
     public function index()
     {
-        $products = Product::orderBy('created_at', 'desc')->get();
+        $products = Product::where('status', 1)->orderBy('created_at', 'desc')->get();
         return view('products.index', ['products' => $products]);
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creating a new product.
      */
     public function create()
     {
@@ -27,7 +27,7 @@ class ProductController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created resource.
      */
     public function store(Request $request)
     {
@@ -35,7 +35,6 @@ class ProductController extends Controller
             'name' => 'required',
             'sku' => 'required|unique:products,sku',
             'price' => 'required|numeric',
-            'status' => 'required',
             'image' => 'image|mimes:jpeg,jpg,png|max:2048',
         ]);
 
@@ -43,15 +42,12 @@ class ProductController extends Controller
             return redirect()->route('products.create')->withErrors($validator)->withInput();
         }
 
-        // 1. Create Product instance
         $product = new Product();
         $product->name = $request->name;
         $product->sku = $request->sku;
         $product->price = $request->price;
-        $product->status = $request->status;
         $product->save();
 
-        // 2. Handle Image Upload
         if ($request->hasFile('image')) {
             $image = $request->image;
             $imageName = time() . '.' . $image->getClientOriginalExtension();
@@ -60,43 +56,29 @@ class ProductController extends Controller
             $product->save();
         }
 
-
-
         return redirect()->route('products.index')->with('success', 'Product created successfully.');
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(Product $product)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
+     * Show the form for editing.
      */
     public function edit($id)
     {
         $product = Product::findOrFail($id);
-
         return view('products.edit', ['product' => $product]);
     }
 
     /**
-     * Update the specified resource in storage.
+     * Update product data (only data fields, not status logic).
      */
     public function update($id, Request $request)
     {
         $product = Product::findOrFail($id);
-        $oldImage = $product->image;
-
+        
         $validator = Validator::make($request->all(), [
             'name' => 'required',
-            // FIX 1: Added a comma before $id so Laravel ignores the current record
-            'sku' => 'required|unique:products,sku,' . $id,
+            'sku' => 'required|unique:products,sku,' . $product->id,
             'price' => 'required|numeric',
-            'status' => 'required',
             'image' => 'image|mimes:jpeg,jpg,png|max:2048',
         ]);
 
@@ -104,22 +86,15 @@ class ProductController extends Controller
             return redirect()->route('products.edit', $product->id)->withErrors($validator)->withInput();
         }
 
-        $product->name = $request->name;
-        $product->sku = $request->sku;
-        $product->price = $request->price;
-        $product->status = $request->status;
-        $product->save();
+        $product->update($request->except('image'));
 
         if ($request->hasFile('image')) {
-            // Delete old image
-            if ($oldImage != null && File::exists(public_path('uploads/products/' . $oldImage))) {
-                File::delete(public_path('uploads/products/' . $oldImage));
+            if ($product->image && File::exists(public_path('uploads/products/' . $product->image))) {
+                File::delete(public_path('uploads/products/' . $product->image));
             }
-
             $image = $request->image;
             $imageName = time() . '.' . $image->getClientOriginalExtension();
             $image->move(public_path('uploads/products'), $imageName);
-
             $product->image = $imageName;
             $product->save();
         }
@@ -128,18 +103,51 @@ class ProductController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Move to trash (Soft Delete).
      */
     public function destroy($id)
     {
         $product = Product::findOrFail($id);
+        $product->status = 0; // Move to trash status
+        $product->save();
+        $product->delete(); // Triggers soft delete
 
-        if ($product->image != null && File::exists(public_path('uploads/products/' . $product->image))) {
+        return redirect()->route('products.index')->with('success', 'Product moved to trash.');
+    }
+
+    /**
+     * Display trash bin.
+     */
+    public function trash()
+    {
+        $products = Product::onlyTrashed()->get();
+        return view('products.trash', ['products' => $products]);
+    }
+
+    /**
+     * Restore item from trash.
+     */
+    public function restore($id)
+    {
+        $product = Product::withTrashed()->findOrFail($id);
+        $product->update(['status' => 1]); // Set back to active
+        $product->restore();
+
+        return redirect()->route('products.index')->with('success', 'Product restored!');
+    }
+
+    /**
+     * Permanently remove from database.
+     */
+    public function forceDelete($id)
+    {
+        $product = Product::withTrashed()->findOrFail($id);
+
+        if ($product->image && File::exists(public_path('uploads/products/' . $product->image))) {
             File::delete(public_path('uploads/products/' . $product->image));
         }
 
-        $product->delete();
-
-        return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
+        $product->forceDelete();
+        return redirect()->route('products.trash')->with('success', 'Product permanently deleted.');
     }
 }
